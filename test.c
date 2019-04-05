@@ -1,3 +1,11 @@
+/*
+ * Authors:
+ * + Andrea Fioraldi <andreafioraldi@gmail.com>
+ * + Pietro Borrello <pietro.borrello95@gmail.com>
+ *
+ * License: BSD 2-Clause
+ */
+
 #include "trx_malloc.h"
 #include <stdio.h>
 #include <stdlib.h>

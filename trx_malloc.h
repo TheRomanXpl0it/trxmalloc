@@ -1,3 +1,11 @@
+/*
+ * Authors:
+ * + Andrea Fioraldi <andreafioraldi@gmail.com>
+ * + Pietro Borrello <pietro.borrello95@gmail.com>
+ *
+ * License: BSD 2-Clause
+ */
+
 #ifndef __TRX_MALLOC_H__
 #define __TRX_MALLOC_H__
 
