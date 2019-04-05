@@ -1,0 +1,59 @@
+=========
+trxmalloc
+=========
+
+1) Overview
+-----------
+
+A dummy allocator that we use to introduce n00bs to heap exploitation.
+trxmalloc is inspired by ptmalloc and many concepts are still valid on the
+standard glibc allocator.
+
+The code were developed by malweisse and anticlockwise and it is licensed
+under BSD 2-Clause.
+
+2) Build
+--------
+
+Just use the Makefile.
+
+$ make
+
+Build a release version of libtrxmalloc.so. It can be linked or preloaded.
+
+$ make debug
+
+Build a debug version of libtrxmalloc.so. This enables debug prints.
+
+3) Test
+-------
+
+The test system is naive. It is just a fuzzy binary.
+
+$ make test
+
+Build the test binary.
+
+$ sh test.sh
+
+Run the test binary many times until a crash.
+
+The test binary uses random integers and the seed is saved in the last_seed file
+every execution.
+
+4) Usage
+--------
+
+To compile a binary linking libtrxmalloc.so:
+
+$ cc program.c -o program -L /path/to/trxmalloc -l trxmalloc \
+  -Wl,-rpath=/path/to/trxmalloc
+
+To load trxmalloc in place of the standard allocator (not needed when compiling
+using the command above) just preload it:
+
+$ env LD_PRELOAD=/path/to/trxmalloc/libctrxmalloc.so ./program 
+
+
+
+
