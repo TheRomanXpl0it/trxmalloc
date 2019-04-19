@@ -27,36 +27,53 @@
 #define IS_MMAPPED 0x2
 #define PREV_INUSE 0x1
 
+/* Offset of a filed, e.g. offsetof(struct malloc_chunk, bk) == SIZE_SZ */
 #define offsetof(type, field) ((unsigned long)&(((type*)(0))->field))
 
+/* Given a chunk get the memory that must be returned by malloc.
+   Same as (void*)&chunk->fd */
 #define chunk2mem(c) ((void*)((char*)(c) + 2 * SIZE_SZ))
+
+/* Given a pointer returned by malloc get the associated chunk */
 #define mem2chunk(mem) ((struct malloc_chunk*)((char*)(mem)-2 * SIZE_SZ))
-// last 3 bits are for flags
+
+/* Get the size from a chunk without the last 3 bits that are flags */
 #define chunksize(c) ((c)->size - ((c)->size & 0x7))
 
+/* A chunk size must be a aligned to 2*SIZE_SZ and greater that MINSIZE */
 #define request2size(req)             \
   (((req) + SIZE_SZ < MINSIZE) \
        ? MINSIZE                      \
        : (((req) + SIZE_SZ + (2 * SIZE_SZ) - 1) & -(2 * SIZE_SZ)))
+
+/* Get the index of a bin associated to a chunk size (e.g. size2bin(48) == 1) */
 #define size2bin(s) (((s) >> 4) - 2)
 
-#define next_by_mem(c) (struct malloc_chunk*)((char*)(c) + chunksize(c))
-#define next_by_off(c, off) (struct malloc_chunk*)((char*)(c) + (off))
-#define prev_by_mem(c) (struct malloc_chunk*)((char*)(c) - (c)->prev_size)
+/* Read the chunk size and navigate to the next chunk in memory */
+#define next_by_mem(c) ( (struct malloc_chunk*)((char*)(c) + chunksize(c)) )
 
+/* Navigate to the next chunk in memory given the offset */
+#define next_by_off(c, off) ( (struct malloc_chunk*)((char*)(c) + (off)) )
+
+/* Read the chunk prev_size and navigate to the previous chunk in memory */
+#define prev_by_mem(c) ( (struct malloc_chunk*)((char*)(c) - (c)->prev_size) )
+
+/* Set flags bits */
 #define unset_prev_inuse(c) ((c)->size - ((c)->size & PREV_INUSE))
 #define set_prev_inuse(c) ((c)->size |= PREV_INUSE)
 #define set_mmapped(c) ((c)->size |= IS_MMAPPED)
 
+/* Get flags bits */
 #define is_mmapped(c) ((c)->size & IS_MMAPPED)
 #define prev_inuse(c) ((c)->size & PREV_INUSE)
 
+/* arena.bins are truncated malloc_chunk structure, use this macro to access a
+   bin instead of arena.bins[something] */
 #define bin_at(i)                                     \
   ((struct malloc_chunk*)((char*)&arena.bins[i * 2] - \
                           offsetof(struct malloc_chunk, fd)))
 
 /* Take a chunk off a bin list */
-
 #define unlink(P, BK, FD) \
   do {                    \
     FD = P->fd;           \
@@ -378,8 +395,11 @@ void trx_free(void* ptr) {
       /* Insert at the top of the fastbin and set fd to the old top */
 
       struct malloc_chunk* old_p = arena.fastbins[idx];
+      
       arena.fastbins[idx] = ck;
       ck->fd = old_p;
+
+      next_by_off(ck, sz)->prev_size = sz;
 
     } else {
 
@@ -441,7 +461,10 @@ void trx_free(void* ptr) {
       arena.top = ck;
 
       return;
+      
     }
+    
+    unset_prev_inuse(p);
 
     sz = chunksize(ck);
     idx = size2bin(sz);
@@ -452,6 +475,9 @@ void trx_free(void* ptr) {
     ck->bk = bin_at(idx);
     ck->fd = fd;
     fd->bk = ck;
+    
+    p->prev_size = sz;
+    
   }
 
   return;
@@ -501,5 +527,5 @@ void* trx_realloc(void* ptr, size_t size) {
   return p;
 }
 
-/* TODO memalign function is missing :( */
+/* TODO posix_memalign function is missing :( */
 
