@@ -77,7 +77,7 @@
 #define unlink(P, BK, FD) \
   do {                    \
     FD = P->fd;           \
-    BK = P->BK;           \
+    BK = P->bk;           \
     FD->bk = BK;          \
     BK->fd = FD;          \
   } while (0)
@@ -176,7 +176,7 @@ struct malloc_state {
       bin N-1 (look at the initialization code in trx_malloc() and the bin_at
       macro). */
 
-  struct malloc_chunk* bins[NBINS * 2 - 2];
+  struct malloc_chunk* bins[NBINS * 2];
 };
 
 /* Thread safety? What is thread safety? TODO */
